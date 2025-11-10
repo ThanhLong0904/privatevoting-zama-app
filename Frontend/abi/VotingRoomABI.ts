@@ -780,6 +780,19 @@ export const VotingRoomABI = {
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "protocolId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "string",
@@ -1015,6 +1028,24 @@ export const VotingRoomABI = {
         }
       ],
       "name": "vote",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "roomCode",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "candidateId",
+          "type": "uint256"
+        }
+      ],
+      "name": "voteSimple",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

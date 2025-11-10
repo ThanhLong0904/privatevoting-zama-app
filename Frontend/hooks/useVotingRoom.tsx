@@ -487,6 +487,46 @@ export const useVotingRoom = (parameters: {
     [getContract, instance, ethersSigner, votingRoomAddress]
   );
 
+  // Cast Vote Simple (using voteSimple function that encrypts internally)
+  const castVoteSimple = useCallback(
+    async (roomCode: string, candidateId: number) => {
+      const contract = getContract();
+      if (!contract || !ethersSigner) {
+        setMessage("Contract or signer not available");
+        return false;
+      }
+
+      setIsLoading(true);
+      setMessage("Casting vote...");
+
+      try {
+        // Call the new voteSimple contract function
+        const tx: ethers.TransactionResponse = await contract.voteSimple(
+          roomCode,
+          candidateId
+        );
+        setMessage(`Waiting for transaction ${tx.hash}...`);
+        const receipt = await tx.wait();
+
+        if (receipt?.status === 1) {
+          setMessage("Vote cast successfully!");
+          return true;
+        } else {
+          setMessage("Transaction failed: Vote could not be cast");
+          return false;
+        }
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        setMessage(`Vote casting failed: ${errorMessage}`);
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [getContract, ethersSigner]
+  );
+
   // Get Room Info
   const getRoomInfo = useCallback(
     async (roomCode: string): Promise<Room | null> => {
@@ -1005,6 +1045,7 @@ export const useVotingRoom = (parameters: {
     addCandidate,
     joinRoom,
     castVote,
+    castVoteSimple,
     getRoomInfo,
     getCandidates,
     checkVotingStatus,

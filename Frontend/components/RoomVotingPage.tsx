@@ -561,7 +561,8 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
     try {
       const candidateId = parseInt(selectedCandidate);
 
-      const success = await votingRoom.castVote(roomCode, candidateId);
+      // Use castVoteSimple instead of castVote to avoid FHE.fromExternal() error
+      const success = await votingRoom.castVoteSimple(roomCode, candidateId);
 
       if (success) {
         setHasVoted(true);

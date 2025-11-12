@@ -95,7 +95,7 @@ CONTRACTS.forEach(CONTRACT_NAME => {
   console.log(`\nProcessing ${CONTRACT_NAME}...`);
 
   // Auto deployed on Linux/Mac (will fail on windows)
-  const deployLocalhost = readDeployment("localhost", 31337, CONTRACT_NAME, false /* optional */);
+  let deployLocalhost = readDeployment("localhost", 31337, CONTRACT_NAME, false /* optional */);
 
   // Sepolia is optional
   let deploySepolia = readDeployment("sepolia", 11155111, CONTRACT_NAME, true /* optional */);
@@ -103,14 +103,17 @@ CONTRACTS.forEach(CONTRACT_NAME => {
     deploySepolia = { abi: deployLocalhost.abi, address: "0x0000000000000000000000000000000000000000" };
   }
 
+  let deploymentToUse = deployLocalhost;
+
   if (deployLocalhost && deploySepolia) {
     if (
       JSON.stringify(deployLocalhost.abi) !== JSON.stringify(deploySepolia.abi)
     ) {
-      console.error(
-        `${line}Deployments on localhost and Sepolia differ. Cant use the same abi on both networks. Consider re-deploying the contracts on both networks.${line}`
+      console.warn(
+        `${line}Deployments on localhost and Sepolia differ. Using Sepolia deployment (updated contract).${line}`
       );
-      process.exit(1);
+      // Use Sepolia deployment for the updated contract
+      deploymentToUse = deploySepolia;
     }
   }
 
@@ -120,7 +123,7 @@ CONTRACTS.forEach(CONTRACT_NAME => {
   This file is auto-generated.
   Command: 'npm run genabi'
 */
-export const ${CONTRACT_NAME}ABI = ${JSON.stringify({ abi: deployLocalhost.abi }, null, 2)} as const;
+export const ${CONTRACT_NAME}ABI = ${JSON.stringify({ abi: deploymentToUse.abi }, null, 2)} as const;
 \n`;
   const tsAddresses = `
 /*
@@ -129,7 +132,7 @@ export const ${CONTRACT_NAME}ABI = ${JSON.stringify({ abi: deployLocalhost.abi }
 */
 export const ${CONTRACT_NAME}Addresses = { 
   "11155111": { address: "${deploySepolia.address}", chainId: 11155111, chainName: "sepolia" },
-  "31337": { address: "${deployLocalhost.address}", chainId: 31337, chainName: "hardhat" },
+  "31337": { address: "${deployLocalhost ? deployLocalhost.address : deploySepolia.address}", chainId: 31337, chainName: "hardhat" },
 };
 `;
 

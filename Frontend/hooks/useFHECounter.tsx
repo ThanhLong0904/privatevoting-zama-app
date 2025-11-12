@@ -327,10 +327,10 @@ export const useFHECounter = (parameters: {
           return;
         }
 
-        setClearCount({ handle: thisCountHandle, clear: res[thisCountHandle] });
+        setClearCount({ handle: thisCountHandle, clear: res[thisCountHandle as `0x${string}`] });
         clearCountRef.current = {
           handle: thisCountHandle,
-          clear: res[thisCountHandle],
+          clear: res[thisCountHandle as `0x${string}`],
         };
 
         setMessage(

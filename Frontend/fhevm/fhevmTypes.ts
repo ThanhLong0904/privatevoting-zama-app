@@ -1,9 +1,9 @@
 import type { FhevmInstance } from "@zama-fhe/relayer-sdk/bundle";
 import type { FhevmInstanceConfig } from "@zama-fhe/relayer-sdk/web";
 import type { HandleContractPair } from "@zama-fhe/relayer-sdk/bundle";
-import type { DecryptedResults } from "@zama-fhe/relayer-sdk/bundle";
+import type { UserDecryptResults } from "@zama-fhe/relayer-sdk/bundle";
 
-export type { FhevmInstance, FhevmInstanceConfig, HandleContractPair, DecryptedResults };
+export type { FhevmInstance, FhevmInstanceConfig, HandleContractPair, UserDecryptResults as DecryptedResults };
 
 export type FhevmDecryptionSignatureType = {
   publicKey: string;

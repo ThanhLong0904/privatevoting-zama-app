@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 import {FHE, euint32, externalEuint32} from "@fhevm/solidity/lib/FHE.sol";
-import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {EthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
 /// @title FHE-based Private Voting Room
 /// @author fhevm-zama-app
 /// @notice A voting contract that ensures privacy using Fully Homomorphic Encryption
-contract VotingRoom is SepoliaConfig {
+contract VotingRoom is EthereumConfig {
     struct Candidate {
         string name;
         string description;
@@ -314,11 +314,65 @@ contract VotingRoom is SepoliaConfig {
         // Convert external encrypted input to internal
         euint32 encryptedVoteValue = FHE.fromExternal(encryptedVote, inputProof);
 
+        // Get current votes and ensure permissions
+        euint32 currentVotes = roomCandidates[roomCode][candidateId].votes;
+
+        // Check if votes are initialized, if not initialize with 0
+        if (!FHE.isInitialized(currentVotes)) {
+            currentVotes = FHE.asEuint32(0);
+            FHE.allowThis(currentVotes);
+        }
+
         // Add the vote to the candidate's vote count
-        roomCandidates[roomCode][candidateId].votes = FHE.add(
-            roomCandidates[roomCode][candidateId].votes,
-            encryptedVoteValue
-        );
+        roomCandidates[roomCode][candidateId].votes = FHE.add(currentVotes, encryptedVoteValue);
+
+        // Allow the contract, voter, and creator to access the updated vote count
+        FHE.allowThis(roomCandidates[roomCode][candidateId].votes);
+        FHE.allow(roomCandidates[roomCode][candidateId].votes, msg.sender);
+        FHE.allow(roomCandidates[roomCode][candidateId].votes, rooms[roomCode].creator);
+
+        // Mark as voted
+        hasVoted[roomCode][msg.sender] = true;
+
+        // Increment total vote count for this room
+        totalVotes[roomCode]++;
+        candidateVotes[roomCode][candidateId]++;
+
+        // Announce results if max participants have voted
+        if (totalVotes[roomCode] >= rooms[roomCode].maxParticipants) {
+            rooms[roomCode].isActive = false;
+            emit RoomEnded(roomCode);
+        }
+
+        emit VoteCast(roomCode, msg.sender);
+    }
+
+    /// @notice Simplified vote function that encrypts the vote inside the contract (for testing)
+    /// @param roomCode Room identifier
+    /// @param candidateId Candidate index
+    function voteSimple(
+        string memory roomCode,
+        uint256 candidateId
+    ) external roomExists(roomCode) isRoomParticipant(roomCode) hasNotVoted(roomCode) {
+        require(rooms[roomCode].isActive, "Room is not active");
+        require(rooms[roomCode].endTime > block.timestamp, "Room has ended");
+        require(candidateId < rooms[roomCode].candidateCount, "Invalid candidate");
+        require(roomCandidates[roomCode][candidateId].exists, "Candidate does not exist");
+
+        // Encrypt the vote of 1 inside the contract (no external input needed)
+        euint32 encryptedVoteValue = FHE.asEuint32(1);
+
+        // Get current votes and ensure permissions
+        euint32 currentVotes = roomCandidates[roomCode][candidateId].votes;
+
+        // Check if votes are initialized, if not initialize with 0
+        if (!FHE.isInitialized(currentVotes)) {
+            currentVotes = FHE.asEuint32(0);
+            FHE.allowThis(currentVotes);
+        }
+
+        // Add the vote to the candidate's vote count
+        roomCandidates[roomCode][candidateId].votes = FHE.add(currentVotes, encryptedVoteValue);
 
         // Allow the contract, voter, and creator to access the updated vote count
         FHE.allowThis(roomCandidates[roomCode][candidateId].votes);

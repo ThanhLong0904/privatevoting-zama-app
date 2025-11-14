@@ -18,7 +18,10 @@ export type IsFhevmSupportedType = (chainId: number) => boolean;
 export type FhevmRelayerSDKType = {
   initSDK: FhevmInitSDKType;
   createInstance: (config: FhevmInstanceConfig) => Promise<FhevmInstance>;
-  SepoliaConfig: FhevmInstanceConfig;
+  // FHEVM v0.9: Support new configs, with SepoliaConfig for backward compatibility
+  EthereumConfig?: FhevmInstanceConfig;
+  ZamaEthereumConfig?: FhevmInstanceConfig;
+  SepoliaConfig?: FhevmInstanceConfig;
   __initialized__?: boolean;
 };
 export type FhevmWindowType = {

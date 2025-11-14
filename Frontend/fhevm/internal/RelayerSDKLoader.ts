@@ -108,8 +108,12 @@ function isFhevmRelayerSDKType(
     trace?.("RelayerSDKLoader: relayerSDK.createInstance is invalid");
     return false;
   }
-  if (!objHasProperty(o, "SepoliaConfig", "object", trace)) {
-    trace?.("RelayerSDKLoader: relayerSDK.SepoliaConfig is invalid");
+  // FHEVM v0.9: Check for EthereumConfig or ZamaEthereumConfig first, fallback to SepoliaConfig for backward compatibility
+  const hasEthereumConfig = objHasProperty(o, "EthereumConfig", "object", trace);
+  const hasZamaEthereumConfig = objHasProperty(o, "ZamaEthereumConfig", "object", trace);
+  const hasSepoliaConfig = objHasProperty(o, "SepoliaConfig", "object", trace);
+  if (!hasEthereumConfig && !hasZamaEthereumConfig && !hasSepoliaConfig) {
+    trace?.("RelayerSDKLoader: relayerSDK config (EthereumConfig/ZamaEthereumConfig/SepoliaConfig) is invalid");
     return false;
   }
   if ("__initialized__" in o) {

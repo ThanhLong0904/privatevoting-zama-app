@@ -73,6 +73,7 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
   const [isReadyToShowBanner, setIsReadyToShowBanner] = useState(false);
   const [isJustVoted, setIsJustVoted] = useState(false); // Prevent flickering after voting
   const hasLoadedRef = useRef(false);
+  const pendingVoteRef = useRef<{ roomCode: string; candidateId: number } | null>(null);
 
   // Password verification states
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -116,12 +117,30 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
     ethersReadonlyProvider,
     initialMockChains,
   } = useMetaMaskEthersSigner();
-  const { instance: fhevmInstance } = useFhevm({
+  
+  // Log provider state for debugging
+  useEffect(() => {
+    console.log("[RoomVotingPage] Provider state changed:", {
+      hasProvider: !!provider,
+      chainId,
+      hasSigner: !!ethersSigner,
+    });
+  }, [provider, chainId, ethersSigner]);
+  
+  const { instance: fhevmInstance, status: fhevmStatus } = useFhevm({
     provider,
     chainId,
     initialMockChains,
     enabled: true, // use enabled to dynamically create the instance on-demand
   });
+  
+  // Log FHEVM instance state for debugging
+  useEffect(() => {
+    console.log("[RoomVotingPage] FHEVM state changed:", {
+      hasInstance: !!fhevmInstance,
+      status: fhevmStatus,
+    });
+  }, [fhevmInstance, fhevmStatus]);
   const { storage: fhevmDecryptionSignatureStorage } = useInMemoryStorage();
 
   // VotingRoom hook
@@ -172,6 +191,56 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
       return () => clearTimeout(timer);
     }
   }, [isJustVoted]);
+
+  // Auto-retry pending vote when FHEVM instance becomes ready
+  useEffect(() => {
+    if (
+      fhevmStatus === "ready" &&
+      fhevmInstance &&
+      pendingVoteRef.current &&
+      !isVoting &&
+      !hasVoted &&
+      room &&
+      room.isActive
+    ) {
+      const pending = pendingVoteRef.current;
+      pendingVoteRef.current = null;
+      console.log("[RoomVotingPage] Retrying pending vote after FHEVM ready:", pending);
+      
+      // Execute the pending vote directly
+      setIsVoting(true);
+      votingRoom
+        .castVote(pending.roomCode, pending.candidateId)
+        .then((success) => {
+          if (success) {
+            setHasVoted(true);
+            setVotedCandidate(pending.candidateId.toString());
+            setIsJustVoted(true);
+            setErrorMessage(
+              "Vote cast successfully! Your vote has been encrypted and recorded securely on the blockchain. 🎉"
+            );
+            setShowError(true);
+            setTimeout(() => {
+              setShowError(false);
+              setErrorMessage("");
+            }, 5000);
+          } else {
+            const errorMessage =
+              votingRoom.message || "Unknown error occurred while casting vote";
+            setErrorMessage(`Vote failed: ${errorMessage}`);
+            setShowError(true);
+          }
+        })
+        .catch((error) => {
+          setErrorMessage(`Unexpected error: ${error}`);
+          setShowError(true);
+        })
+        .finally(() => {
+          setIsVoting(false);
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fhevmStatus, fhevmInstance, isVoting, hasVoted, room, votingRoom]);
 
   // Load room data on component mount
   useEffect(() => {
@@ -546,6 +615,26 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
       setErrorMessage("You have already voted in this room.");
       setShowError(true);
       return;
+    }
+
+    // Check if FHEVM instance is ready
+    if (fhevmStatus !== "ready" || !fhevmInstance) {
+      if (fhevmStatus === "loading" || fhevmStatus === "idle") {
+        // Store pending vote and wait for instance
+        const candidateId = parseInt(selectedCandidate);
+        pendingVoteRef.current = { roomCode, candidateId };
+        setErrorMessage("Waiting for encryption system to initialize...");
+        setShowError(true);
+        return;
+      } else if (fhevmStatus === "error") {
+        setErrorMessage("Encryption system error. Please refresh the page.");
+        setShowError(true);
+        return;
+      } else {
+        setErrorMessage("Encryption system not ready. Please wait...");
+        setShowError(true);
+        return;
+      }
     }
 
     setIsVoting(true);
@@ -1039,6 +1128,15 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
                           <>
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
                             Processing Vote...
+                          </>
+                        ) : fhevmStatus !== "ready" || !fhevmInstance ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                            {fhevmStatus === "loading" || fhevmStatus === "idle"
+                              ? "Initializing Encryption..."
+                              : fhevmStatus === "error"
+                              ? "Encryption Error"
+                              : "Preparing Encryption..."}
                           </>
                         ) : !isParticipant ? (
                           currentParticipants >= room.maxParticipants ? (

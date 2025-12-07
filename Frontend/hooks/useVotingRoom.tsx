@@ -1,7 +1,7 @@
 "use client";
 
 import { ethers } from "ethers";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { FhevmInstance } from "@/fhevm/fhevmTypes";
 import { GenericStringStorage } from "@/fhevm/GenericStringStorage";
 import { VotingRoomABI } from "@/abi/VotingRoomABI";
@@ -35,8 +35,18 @@ export const useVotingRoom = (parameters: {
   chainId: number | undefined;
   fhevmDecryptionSignatureStorage?: GenericStringStorage;
 }) => {
-  const { instance, ethersSigner, ethersReadonlyProvider, chainId, fhevmDecryptionSignatureStorage } =
+  // Don't destructure instance to avoid stale closure - read directly from parameters
+  const { ethersSigner, ethersReadonlyProvider, chainId, fhevmDecryptionSignatureStorage } =
     parameters;
+
+  // Use ref to always get the latest instance value
+  const instanceRef = useRef<FhevmInstance | undefined>(parameters.instance);
+  
+  // Update ref whenever instance changes
+  useEffect(() => {
+    instanceRef.current = parameters.instance;
+    console.log("[useVotingRoom] Instance updated:", !!parameters.instance);
+  }, [parameters.instance]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
@@ -404,8 +414,20 @@ export const useVotingRoom = (parameters: {
   const castVote = useCallback(
     async (roomCode: string, candidateId: number) => {
       const contract = getContract();
-      if (!contract || !instance || !ethersSigner) {
+      // Use ref to get the latest instance value (always fresh, no stale closure)
+      const currentInstance = instanceRef.current;
+      console.log("[castVote] Checking availability:", {
+        hasContract: !!contract,
+        hasInstance: !!currentInstance,
+        hasSigner: !!ethersSigner,
+      });
+      if (!contract || !currentInstance || !ethersSigner) {
         setMessage("Contract, FHEVM instance, or signer not available");
+        console.error("[castVote] Missing:", {
+          contract: !!contract,
+          instance: !!currentInstance,
+          signer: !!ethersSigner,
+        });
         return false;
       }
 
@@ -420,7 +442,7 @@ export const useVotingRoom = (parameters: {
         await new Promise((resolve) => setTimeout(resolve, 100));
 
         // Create encrypted input for vote (value = 1) with retry logic
-        const input = instance.createEncryptedInput(
+        const input = currentInstance.createEncryptedInput(
           votingRoomAddress,
           userAddress
         );
@@ -484,7 +506,7 @@ export const useVotingRoom = (parameters: {
         setIsLoading(false);
       }
     },
-    [getContract, instance, ethersSigner, votingRoomAddress]
+    [getContract, ethersSigner, votingRoomAddress] // Remove parameters.instance from deps, use ref instead
   );
 
   // Cast Vote Simple (using voteSimple function that encrypts internally)

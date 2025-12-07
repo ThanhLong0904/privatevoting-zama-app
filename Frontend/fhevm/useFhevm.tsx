@@ -98,6 +98,7 @@ export function useFhevm(parameters: {
 
     if (_isRunning === true) {
       if (_providerRef.current === undefined) {
+        console.log("[useFhevm] Provider is undefined, cannot create instance");
         // instance should be undefined
         // this code below should be unecessary
         _setInstance(undefined);
@@ -105,6 +106,8 @@ export function useFhevm(parameters: {
         _setStatus("idle");
         return;
       }
+      
+      console.log("[useFhevm] Starting instance creation, provider:", !!_providerRef.current, "chainId:", _chainIdRef.current);
 
       if (!_abortControllerRef.current) {
         _abortControllerRef.current = new AbortController();

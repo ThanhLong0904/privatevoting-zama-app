@@ -142,7 +142,6 @@ function ChartTooltipContent({
     }
 
     const [item] = payload;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const key = `${labelKey || (item as any)?.dataKey || (item as any)?.name || "value"}`;
     const itemConfig = getPayloadConfigFromPayload(config, item, key);
     const value =

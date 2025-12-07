@@ -101,7 +101,6 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
       const actualVoteCount = await votingRoom.getTotalVotes(roomCode);
       setCurrentVoters(actualVoteCount);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       // Handle error silently
     }
@@ -244,7 +243,6 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
           const actualVoteCount = await votingRoom.getTotalVotes(roomCode);
           setCurrentVoters(actualVoteCount);
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
           // Fallback to estimation if contract call fails
           if (roomInfo && roomInfo.isActive) {
@@ -262,7 +260,6 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
         // Mark loading as complete
         setIsLoadingUserStatus(false);
         clearTimeout(loadingTimeout);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (_) {
         hasLoadedRef.current = false; // Reset on error to allow retry
@@ -328,7 +325,6 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
       }
 
       setCandidates(updatedCandidates);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       throw _; // Re-throw to trigger fallback in calling function
     }
@@ -405,8 +401,6 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
           if (room.isActive && roomCode) {
             try {
               await votingRoom.checkAndEndRoom(roomCode);
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (_) {
               // Handle error silently
@@ -518,8 +512,6 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
               try {
                 await votingRoom.checkAndEndRoom(roomCode);
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
               } catch (_) {
                 // Handle error silently
               }
@@ -561,8 +553,7 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
     try {
       const candidateId = parseInt(selectedCandidate);
 
-      // Use castVoteSimple instead of castVote to avoid FHE.fromExternal() error
-      const success = await votingRoom.castVoteSimple(roomCode, candidateId);
+      const success = await votingRoom.castVote(roomCode, candidateId);
 
       if (success) {
         setHasVoted(true);
@@ -638,7 +629,6 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
           if (roomInfo) {
             setCurrentParticipants(roomInfo.participantCount);
           }
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
           // Handle error silently

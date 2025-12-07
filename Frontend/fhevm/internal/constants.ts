@@ -1,2 +1,3 @@
-export const SDK_CDN_URL =
-  "https://cdn.zama.ai/relayer-sdk-js/0.3.0-5/relayer-sdk-js.umd.cjs";
+// Load the Relayer SDK from a local copy to avoid CDN/connection/CSP issues.
+// The file is copied from @zama-fhe/relayer-sdk bundle into /public.
+export const SDK_CDN_URL = "/relayer-sdk-js.umd.cjs";

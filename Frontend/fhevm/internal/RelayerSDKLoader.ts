@@ -57,29 +57,36 @@ export class RelayerSDKLoader {
       script.async = true;
 
       script.onload = () => {
-        if (!isFhevmWindowType(window, this._trace)) {
-          console.log("[RelayerSDKLoader] script onload FAILED...");
-          reject(
-            new Error(
-              `RelayerSDKLoader: Relayer SDK script has been successfully loaded from ${SDK_CDN_URL}, however, the window.relayerSDK object is invalid.`
-            )
-          );
-        }
-        resolve();
+        console.log("[RelayerSDKLoader] script onload triggered");
+        // Give the script a moment to initialize window.relayerSDK
+        setTimeout(() => {
+          if (!isFhevmWindowType(window, this._trace)) {
+            console.error("[RelayerSDKLoader] script onload FAILED - window.relayerSDK not found after load");
+            console.error("[RelayerSDKLoader] window keys:", Object.keys(window));
+            reject(
+              new Error(
+                `RelayerSDKLoader: Relayer SDK script has been successfully loaded from ${SDK_CDN_URL}, however, the window.relayerSDK object is invalid.`
+              )
+            );
+            return;
+          }
+          console.log("[RelayerSDKLoader] script loaded successfully, window.relayerSDK is available");
+          resolve();
+        }, 100);
       };
 
-      script.onerror = () => {
-        console.log("[RelayerSDKLoader] script onerror... ");
+      script.onerror = (error) => {
+        console.error("[RelayerSDKLoader] script onerror:", error);
         reject(
           new Error(
-            `RelayerSDKLoader: Failed to load Relayer SDK from ${SDK_CDN_URL}`
+            `RelayerSDKLoader: Failed to load Relayer SDK from ${SDK_CDN_URL}. Check network connection and file path.`
           )
         );
       };
 
-      console.log("[RelayerSDKLoader] add script to DOM...");
+      console.log(`[RelayerSDKLoader] adding script to DOM with src: ${SDK_CDN_URL}`);
       document.head.appendChild(script);
-      console.log("[RelayerSDKLoader] script added!")
+      console.log("[RelayerSDKLoader] script element added to DOM");
     });
   }
 }

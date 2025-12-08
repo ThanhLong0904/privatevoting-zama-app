@@ -12,7 +12,7 @@ export default function Home() {
         break;
       case "voting":
         if (data?.roomCode) {
-          router.push(`/room/${data.roomCode}`);
+          window.location.href =`/room/${data.roomCode}`
         }
         break;
       case "dashboard":

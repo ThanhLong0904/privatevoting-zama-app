@@ -14,7 +14,7 @@ export default function Dashboard() {
         break;
       case "voting":
         if (data?.roomCode) {
-          router.push(`/room/${data.roomCode}`);
+          window.location.href =`/room/${data.roomCode}`
         }
 
         break;

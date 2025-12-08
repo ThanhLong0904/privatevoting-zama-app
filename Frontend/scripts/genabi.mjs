@@ -103,15 +103,23 @@ CONTRACTS.forEach(CONTRACT_NAME => {
     deploySepolia = { abi: deployLocalhost.abi, address: "0x0000000000000000000000000000000000000000" };
   }
 
-  if (deployLocalhost && deploySepolia) {
+  // Check if ABI differs between networks
+  if (deployLocalhost && deploySepolia && deploySepolia.address !== "0x0000000000000000000000000000000000000000") {
     if (
       JSON.stringify(deployLocalhost.abi) !== JSON.stringify(deploySepolia.abi)
     ) {
-      console.error(
-        `${line}Deployments on localhost and Sepolia differ. Cant use the same abi on both networks. Consider re-deploying the contracts on both networks.${line}`
+      console.warn(
+        `${line}⚠️  WARNING: ABI differs between localhost and Sepolia.${line}` +
+        `This usually happens after upgrading FHEVM versions.${line}` +
+        `Using ABI from localhost (newest version) for both networks.${line}` +
+        `Please re-deploy contracts on Sepolia: 'cd fhevm-hardhat && npx hardhat deploy --network sepolia'${line}`
       );
-      process.exit(1);
+      // Use localhost ABI for both networks (newest version)
+      deploySepolia.abi = deployLocalhost.abi;
     }
+  } else if (deploySepolia.address === "0x0000000000000000000000000000000000000000") {
+    // Sepolia not deployed, use localhost ABI
+    deploySepolia.abi = deployLocalhost.abi;
   }
 
 

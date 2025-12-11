@@ -236,6 +236,15 @@ export const createFhevmInstance = async (parameters: {
 
     if (fhevmRelayerMetadata) {
       // fhevmRelayerMetadata is defined, which means rpcUrl refers to a FHEVM Hardhat Node
+      // Only use mock in development/localhost environment
+      // Skip mock in production builds (like Vercel) to avoid build errors
+      if (process.env.NODE_ENV === 'production' && !rpcUrl?.includes('localhost')) {
+        throwFhevmError(
+          "MOCK_NOT_AVAILABLE",
+          "FHEVM mock utils are only available in development with a local Hardhat node. Please use a production network or run locally."
+        );
+      }
+
       notify("creating");
 
       //////////////////////////////////////////////////////////////////////////
@@ -245,16 +254,30 @@ export const createFhevmInstance = async (parameters: {
       // IN THE FINAL PRODUCTION BUNDLE!!
       // 
       //////////////////////////////////////////////////////////////////////////
-      const fhevmMock = await import("./mock/fhevmMock");
-      const mockInstance = await fhevmMock.fhevmMockCreateInstance({
-        rpcUrl,
-        chainId,
-        metadata: fhevmRelayerMetadata,
-      });
+      try {
+        const fhevmMock = await import(
+          /* webpackChunkName: "fhevm-mock" */
+          /* webpackMode: "lazy" */
+          "./mock/fhevmMock"
+        );
+        const mockInstance = await fhevmMock.fhevmMockCreateInstance({
+          rpcUrl,
+          chainId,
+          metadata: fhevmRelayerMetadata,
+        });
 
-      throwIfAborted();
+        throwIfAborted();
 
-      return mockInstance;
+        return mockInstance;
+      } catch (error) {
+        // In production builds, mock utils may not be available
+        // This should only happen in development with local Hardhat node
+        throwFhevmError(
+          "MOCK_IMPORT_ERROR",
+          `Failed to import FHEVM mock utils. This feature is only available in development with a local Hardhat node. Error: ${error}`,
+          error
+        );
+      }
     }
   }
 

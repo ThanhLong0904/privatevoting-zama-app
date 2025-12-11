@@ -239,7 +239,6 @@ export function RoomVotingPage({ onNavigate, roomCode }: RoomVotingPageProps) {
           setIsVoting(false);
         });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fhevmStatus, fhevmInstance, isVoting, hasVoted, room, votingRoom]);
 
   // Load room data on component mount

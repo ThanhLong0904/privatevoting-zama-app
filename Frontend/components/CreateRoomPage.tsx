@@ -29,8 +29,6 @@ import { useVotingRoom } from "@/hooks/useVotingRoom";
 import { useFhevm } from "@/fhevm/useFhevm";
 import { useWalletCheck } from "@/hooks/useWalletCheck";
 import { useMetaMaskEthersSigner } from "@/hooks/metamask/useMetaMaskEthersSigner";
-import { useRouter } from "next/navigation";
-
 interface Candidate {
   id: string;
   name: string;
@@ -56,7 +54,6 @@ interface CreateRoomPageProps {
 }
 
 export function CreateRoomPage({ onNavigate }: CreateRoomPageProps) {
-  const router = useRouter();
   const [roomCode, setRoomCode] = useState("");
   const [roomTitle, setRoomTitle] = useState("");
   const [roomDescription, setRoomDescription] = useState("");
@@ -415,7 +412,7 @@ export function CreateRoomPage({ onNavigate }: CreateRoomPageProps) {
                 <div className="flex gap-3">
                   <Button
                     onClick={() => {
-                     window.location.href =`/room/${data.roomCode}`
+                     window.location.href =`/room/${createdRoom.code}`
                     }}
                     className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                   >
